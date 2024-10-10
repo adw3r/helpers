@@ -3,14 +3,14 @@ import logging
 
 import httpx
 
-from . import config, errors
+from . import errors
 
 logger = logging.getLogger('src.api_interfaces')
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 
 class AntiCaptchaAPI:
-    API_KEY = config.ANTICAPTCHA_APIKEY
+    API_KEY = None
 
     __headers = {
         'Accept': 'application/json',
@@ -19,7 +19,8 @@ class AntiCaptchaAPI:
     __user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36'
     _client = httpx.AsyncClient(timeout=httpx.Timeout(10))
 
-    def __init__(self):
+    def __init__(self, api_key: str):
+        self.API_KEY = api_key
         self._client = httpx.AsyncClient(timeout=httpx.Timeout(10))
 
     @staticmethod
