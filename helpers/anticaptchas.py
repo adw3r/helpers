@@ -28,47 +28,43 @@ class AntiCaptchaAPI:
         if 'Are you a human?' in response.text:
             raise errors.AreYouHumanError('Are you a human?')
 
-    @classmethod
-    async def get_balance(cls) -> httpx.Response:
+    async def get_balance(self) -> httpx.Response:
         json_data = {
-            'clientKey': cls.API_KEY,
+            'clientKey': self.API_KEY,
         }
 
-        response = httpx.post('https://api.anti-captcha.com/getBalance', headers=cls.__headers, json=json_data)
+        response = httpx.post('https://api.anti-captcha.com/getBalance', headers=self.__headers, json=json_data)
         logger.debug(f'balance response: {response}')
         return response
 
-    @classmethod
-    async def create_task(cls, url: str, sitekey: str) -> httpx.Response:
+    async def create_task(self, url: str, sitekey: str) -> httpx.Response:
         json_data = {
-            'clientKey': cls.API_KEY,
+            'clientKey': self.API_KEY,
             'task': {
                 'type': 'RecaptchaV2TaskProxyless',
                 'websiteURL': url,
                 'websiteKey': sitekey,
-                'userAgent': cls.__user_agent,
+                'userAgent': self.__user_agent,
             },
             'softId': 0,
         }
 
-        response = await cls._client.post('https://api.anti-captcha.com/createTask', headers=cls.__headers,
-                                          json=json_data)
+        response = await self._client.post('https://api.anti-captcha.com/createTask', headers=self.__headers,
+                                           json=json_data)
         return response
 
-    @classmethod
-    async def get_task_result(cls, task_id: str | int) -> httpx.Response:
+    async def get_task_result(self, task_id: str | int) -> httpx.Response:
         json_data = {
-            'clientKey': cls.API_KEY,
+            'clientKey': self.API_KEY,
             'taskId': task_id,
         }
 
-        response = await cls._client.post('https://api.anti-captcha.com/getTaskResult', headers=cls.__headers,
-                                          json=json_data)
+        response = await self._client.post('https://api.anti-captcha.com/getTaskResult', headers=self.__headers,
+                                           json=json_data)
         return response
 
-    @classmethod
-    async def get_solution(cls, url: str, sitekey: str, attempts_count=10) -> str | None:
-        response = await cls.create_task(url, sitekey)
+    async def get_solution(self, url: str, sitekey: str, attempts_count=10) -> str | None:
+        response = await self.create_task(url, sitekey)
         response.raise_for_status()
         task_id = response.json().get('taskId')
         logger.debug(f'task_id: {task_id}')
@@ -76,12 +72,12 @@ class AntiCaptchaAPI:
             raise errors.TaskIdIsEmptyError('No task id')
         logger.debug(response.text)
 
-        attempts_count = 10
+        attempts_count = attempts_count * 2
         solution: str | None = None
         while solution is None and attempts_count > 0:
             attempts_count -= 1
             try:
-                task_result: httpx.Response = await cls.get_task_result(task_id=task_id)
+                task_result: httpx.Response = await self.get_task_result(task_id=task_id)
                 logger.debug(f'task_result: {task_result.text}')
                 task_result.raise_for_status()
                 solution_dict = task_result.json().get('solution')
