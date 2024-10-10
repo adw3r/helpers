@@ -109,6 +109,7 @@ class OneSecMail:
     def __init__(self, login: str | None = None, domain: str | None = None):
         self.login = login
         self.domain = domain
+        self.email = f'{login}@{domain}'
 
     @classmethod
     async def __get_response(cls, params: dict):
