@@ -130,7 +130,7 @@ class OneSecMail:
     async def domains_list(cls):
         'https://www.1secmail.com/api/v1/?action=getDomainList'
         params = {
-            'actions': 'getDomainList'
+            'action': 'getDomainList'
         }
         response = await cls.__get_response(params)
         return response
@@ -145,7 +145,7 @@ class OneSecMail:
         'https://www.1secmail.com/api/v1/?action=getMessages&login=demo&domain=1secmail.com'
         self.__check_login_domain()
         params = {
-            'actions': 'getMessages',
+            'action': 'getMessages',
             'login': self.login,
             'domain': self.domain
         }
@@ -158,7 +158,7 @@ class OneSecMail:
         if not message_id:
             raise errors.MessageEmptyError('message id can`t be empty')
         params = {
-            'actions': 'readMessage',
+            'action': 'readMessage',
             'login': self.login,
             'domain': self.domain,
             'id': message_id
@@ -171,7 +171,7 @@ class OneSecMail:
         if not file_name:
             raise errors.FileNameEmptyError('file_name id can`t be empty')
         params = {
-            'actions': 'download',
+            'action': 'download',
             'login': self.login,
             'domain': self.domain,
             'file': file_name
