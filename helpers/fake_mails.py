@@ -18,40 +18,42 @@ class TempMailApi:
     def __repr__(self):
         return f'<TempMailApi {self.email=}>'
 
-    APIKEY = ''  # works
-    domains = (
-        '@cevipsa.com', '@cpav3.com', '@nuclene.com', '@steveix.com',
-        '@mocvn.com', '@tenvil.com', '@tgvis.com', '@amozix.com', '@anypsd.com', '@maxric.com'
-    )
+    APIKEY = None  # works
+    domains = ("@cevipsa.com", "@cpav3.com", "@nuclene.com", "@steveix.com", "@mocvn.com", "@tenvil.com", "@tgvis.com",
+               "@amozix.com", "@anypsd.com", "@maxric.com")
     """
     https://rapidapi.com/Privatix/api/temp-mail
     """
 
-    headers = {'x-rapidapi-host': 'privatix-temp-mail-v1.p.rapidapi.com', 'x-rapidapi-key': APIKEY}
     __base_url = 'https://privatix-temp-mail-v1.p.rapidapi.com/request'
     __client = httpx.AsyncClient(verify=False)
     email: str = None
 
-    def __init__(self, email: str):
-        self.email = email
-        self.__email_id = self.__get_md5_hash(email)
+    def __get_headers(self):
+        return {'x-rapidapi-host': 'privatix-temp-mail-v1.p.rapidapi.com', 'x-rapidapi-key': self.APIKEY}
 
-    @classmethod
-    async def create_email_instance(cls) -> 'TempMailApi':
+    def __init__(self, apikey: str, email: str = None):
+        self.APIKEY = apikey
+        self.email = email
+        if self.email is not None:
+            self.__email_id = self.__get_md5_hash(email)
+
+    def create_email_instance(self) -> 'Self':
         """
         :return: TempMailApi object instance
         """
-        # domains = await cls.get_domains()
-        # domain = random.choice(domains.json())
-        if cls.email is None:
-            domain = random.choice(cls.domains)
-            return cls(email=generate_username() + domain)
+        if self.email is None:
+            domain = random.choice(self.domains)
+            self.email = generate_username() + domain
+            self.__email_id = self.__get_md5_hash(self.email)
+            return self
         else:
             raise errors.CantUseThisMethod('Can`t create an email instance with already existing email')
 
-    @classmethod
-    async def __create_request(cls, path: str):
-        response = await cls.__client.get(cls.__base_url + path, headers=cls.headers)
+    async def __create_request(self, path: str):
+        headers = self.__get_headers()
+        url_path = self.__base_url + path
+        response = await self.__client.get(url_path, headers=headers)
         return response
 
     @staticmethod
@@ -61,10 +63,9 @@ class TempMailApi:
         md5_result = md5_hash.hexdigest()
         return md5_result
 
-    @classmethod
-    async def get_domains(cls) -> httpx.Response:
+    async def get_domains(self) -> httpx.Response:
         url = '/domains/'
-        response = await cls.__create_request(url)
+        response = await self.__create_request(url)
         return response
 
     async def get_messages(self) -> httpx.Response:
@@ -101,7 +102,7 @@ class OneSecMail:
     """
     https://www.1secmail.com/api/
     """
-    __client = httpx.AsyncClient()
+    __client = httpx.AsyncClient(timeout=60)
     __api_url = 'https://www.1secmail.com/api/v1/'
     login: str | None = None
     domain: str | None = None
@@ -130,7 +131,7 @@ class OneSecMail:
     async def domains_list(cls):
         'https://www.1secmail.com/api/v1/?action=getDomainList'
         params = {
-            'actions': 'getDomainList'
+            'action': 'getDomainList'
         }
         response = await cls.__get_response(params)
         return response
@@ -145,7 +146,7 @@ class OneSecMail:
         'https://www.1secmail.com/api/v1/?action=getMessages&login=demo&domain=1secmail.com'
         self.__check_login_domain()
         params = {
-            'actions': 'getMessages',
+            'action': 'getMessages',
             'login': self.login,
             'domain': self.domain
         }
@@ -158,7 +159,7 @@ class OneSecMail:
         if not message_id:
             raise errors.MessageEmptyError('message id can`t be empty')
         params = {
-            'actions': 'readMessage',
+            'action': 'readMessage',
             'login': self.login,
             'domain': self.domain,
             'id': message_id
@@ -171,7 +172,7 @@ class OneSecMail:
         if not file_name:
             raise errors.FileNameEmptyError('file_name id can`t be empty')
         params = {
-            'actions': 'download',
+            'action': 'download',
             'login': self.login,
             'domain': self.domain,
             'file': file_name
