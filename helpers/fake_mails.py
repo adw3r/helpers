@@ -49,7 +49,7 @@ class TempMailApi:
         if self.email is not None:
             self.__email_id = self.__get_md5_hash(email)
 
-    def create_email_instance(self) -> "Self":
+    def create_email_instance(self) -> "TempMailApi":
         """
         :return: TempMailApi object instance
         """
@@ -58,8 +58,7 @@ class TempMailApi:
             self.email = generate_username() + domain
             self.__email_id = self.__get_md5_hash(self.email)
             return self
-        else:
-            raise errors.CantUseThisMethod("Can`t create an email instance with already existing email")
+        raise errors.CantUseThisMethod("Can`t create an email instance with already existing email")
 
     async def __create_request(self, path: str):
         headers = self.__get_headers()
@@ -72,42 +71,34 @@ class TempMailApi:
     def __get_md5_hash(email: str) -> str:
         md5_hash = hashlib.md5()
         md5_hash.update(email.encode("utf-8"))
-        md5_result = md5_hash.hexdigest()
-        return md5_result
+        return md5_hash.hexdigest()
 
     async def get_domains(self) -> httpx.Response:
         url = "/domains/"
-        response = await self.__create_request(url)
-        return response
+        return await self.__create_request(url)
 
     async def get_messages(self) -> httpx.Response:
         url = f"/mail/id/{self.__email_id}/"
-        response = await self.__create_request(url)
-        return response
+        return await self.__create_request(url)
 
     async def get_message_attachments(self) -> httpx.Response:  # testme
         url = f"/atchmnts/id/{self.__email_id}/"
-        response = await self.__create_request(url)
-        return response
+        return await self.__create_request(url)
 
     async def get_one_attachment(self, bat_id: str) -> httpx.Response:  # testme
         url = f"/one_attachment/id/{self.__email_id}/{bat_id}/"
-        response = await self.__create_request(url)
-        return response
+        return await self.__create_request(url)
 
     async def get_one_message(self) -> httpx.Response:  # testme
         email_id = self.__get_md5_hash(self.email)
-        response = await self.__create_request(f"/one_mail/id/{email_id}/")
-        return response
+        return await self.__create_request(f"/one_mail/id/{email_id}/")
 
     async def get_source_message(self) -> httpx.Response:  # testme
         self.__email_id = self.__get_md5_hash(self.email)
-        response = await self.__create_request(f"/source/id/{self.__email_id}/")
-        return response
+        return await self.__create_request(f"/source/id/{self.__email_id}/")
 
     async def get_delete_message(self) -> httpx.Response:  # testme
-        response = await self.__create_request(f"/delete/id/{self.__get_md5_hash(self.email)}/")
-        return response
+        return await self.__create_request(f"/delete/id/{self.__get_md5_hash(self.email)}/")
 
 
 class OneSecMail:
@@ -140,22 +131,19 @@ class OneSecMail:
 
     @classmethod
     async def __get_response(cls, params: dict) -> httpx.Response:
-        response = await cls.__client.get(f"{cls.__api_url}", params=params)
-        return response
+        return await cls.__client.get(f"{cls.__api_url}", params=params)
 
     @classmethod
     async def gen_random_mailboxes(cls, count: int) -> httpx.Response:
         "https://www.1secmail.com/api/v1/?action=genRandomMailbox&count=10"
         params = {"action": "genRandomMailbox", "count": count}
-        response = await cls.__get_response(params)
-        return response
+        return await cls.__get_response(params)
 
     @classmethod
     async def domains_list(cls) -> httpx.Response:
         "https://www.1secmail.com/api/v1/?action=getDomainList"
         params = {"action": "getDomainList"}
-        response = await cls.__get_response(params)
-        return response
+        return await cls.__get_response(params)
 
     def __check_login_domain(self):
         if not self.login:
@@ -167,8 +155,7 @@ class OneSecMail:
         "https://www.1secmail.com/api/v1/?action=getMessages&login=demo&domain=1secmail.com"
         self.__check_login_domain()
         params = {"action": "getMessages", "login": self.login, "domain": self.domain}
-        response = await self.__get_response(params)
-        return response
+        return await self.__get_response(params)
 
     async def read_message(self, message_id: str | int) -> httpx.Response:
         "https://www.1secmail.com/api/v1/?action=readMessage&login=demo&domain=1secmail.com&id=639"
@@ -176,13 +163,11 @@ class OneSecMail:
         if not message_id:
             raise errors.MessageEmptyError("message id can`t be empty")
         params = {"action": "readMessage", "login": self.login, "domain": self.domain, "id": message_id}
-        response = await self.__get_response(params)
-        return response
+        return await self.__get_response(params)
 
     async def download(self, file_name: str) -> httpx.Response:
         "https://www.1secmail.com/api/v1/?action=download&login=demo&domain=1secmail.com&id=639&file=iometer.pdf"
         if not file_name:
             raise errors.FileNameEmptyError("file_name id can`t be empty")
         params = {"action": "download", "login": self.login, "domain": self.domain, "file": file_name}
-        response = await self.__get_response(params)
-        return response
+        return await self.__get_response(params)

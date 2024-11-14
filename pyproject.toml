@@ -11,6 +11,21 @@ httpx = {extras = ["all"], version = "^0.27.2"}
 pytest-asyncio = "^0.24.0"
 
 
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.7.3"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff.lint]
+extend-select = ["C4", "SIM", "TCH", "PLR", "R"]
+ignore = ["PLR0913"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+
+[tool.ruff.lint.pylint]
+max-statements = 35
