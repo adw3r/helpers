@@ -171,3 +171,41 @@ class OneSecMail:
             raise errors.FileNameEmptyError("file_name id can`t be empty")
         params = {"action": "download", "login": self.login, "domain": self.domain, "file": file_name}
         return await self.__get_response(params)
+
+
+class RegMailSpace:
+    __client = httpx.AsyncClient()
+
+    def __init__(self, api_key, email=None):
+        self.__api_key = api_key
+        self.email = email
+        self.__headers = {
+            "x-rapidapi-host": "temp-mail117.p.rapidapi.com",
+            "x-rapidapi-key": self.__api_key,
+        }
+
+    def __repr__(self):
+        return f"RegMailSpace(api_key={self.__api_key}, email={self.email})"
+
+    async def create_instance(self):
+        email = await self.get_email()
+        self.email = email.get("email")
+        return self
+
+    async def get_messages(self, email=None) -> httpx.Response:
+        if email is None:
+            email = self.email
+
+        if email is None:
+            raise Exception("email cannot be None")
+        params = {
+            "email": email,
+        }
+        response = await self.__client.get(
+            "https://temp-mail117.p.rapidapi.com/getmail.php", headers=self.__headers, params=params
+        )
+        return response
+
+    async def get_email(self, email=None) -> dict:
+        response = await self.__client.get("https://temp-mail117.p.rapidapi.com/getaddress.php", headers=self.__headers)
+        return response.json()
