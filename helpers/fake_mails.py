@@ -230,7 +230,7 @@ class RapidApi44:
             "Content-Type": "application/json"
         }
 
-    async def create_instance(self):
+    async def create_instance(self) -> 'RapidApi44':
         resp = await self.create_email()
         email = resp.json()['email']
         self.email = email

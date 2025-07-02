@@ -25,6 +25,15 @@ class TestRapidApi44:
         cli = await cli.create_instance()
         assert cli.email is not None
 
+    @pytest.mark.asyncio(loop_scope="session")
+    async def test_get_message_response(self):
+        cli = helpers.fake_mails.RapidApi44(os.environ["RAPIDAPI_KEY"])
+        cli = await cli.create_instance()
+        resp = await cli.get_messages()
+        print(resp.text)
+        assert resp.status_code == 200
+
+
 class TestRegMailSpace:
 
     @pytest.mark.asyncio(loop_scope="session")
