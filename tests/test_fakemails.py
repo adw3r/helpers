@@ -59,4 +59,7 @@ class TestTempMailApi:
         cli = helpers.fake_mails.TempMailApi(os.getenv("TEMP_MAIL_API_KEY"))
 
         cli = cli.create_email_instance()
+        print(cli.email)
         assert cli.email is not None
+        messages = await cli.get_messages()
+        print(messages.text)
