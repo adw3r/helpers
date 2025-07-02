@@ -211,7 +211,6 @@ class RegMailSpace:
         )
         return response
 
-    @async_retry_response
     async def get_email(self) -> dict:
         response = await self.__client.get(
             "https://temp-mail117.p.rapidapi.com/getaddress.php", headers=self.__headers
