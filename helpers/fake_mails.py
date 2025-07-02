@@ -189,23 +189,31 @@ class RegMailSpace:
 
     async def create_instance(self):
         email = await self.get_email()
+        if email.get("message"):
+            raise Exception("Monthly limit exceeded")
         self.email = email.get("email")
+
         return self
 
     async def get_messages(self, email=None) -> httpx.Response:
-        if email is None:
-            email = self.email
+        if email is not None:
+            self.email = email
 
-        if email is None:
+        if not self.email:
             raise Exception("email cannot be None")
         params = {
-            "email": email,
+            "email": self.email,
         }
         response = await self.__client.get(
-            "https://temp-mail117.p.rapidapi.com/getmail.php", headers=self.__headers, params=params
+            "https://temp-mail117.p.rapidapi.com/getmail.php",
+            headers=self.__headers,
+            params=params,
         )
         return response
 
-    async def get_email(self, email=None) -> dict:
-        response = await self.__client.get("https://temp-mail117.p.rapidapi.com/getaddress.php", headers=self.__headers)
+    @async_retry_response
+    async def get_email(self) -> dict:
+        response = await self.__client.get(
+            "https://temp-mail117.p.rapidapi.com/getaddress.php", headers=self.__headers
+        )
         return response.json()
