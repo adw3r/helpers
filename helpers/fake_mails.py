@@ -216,3 +216,34 @@ class RegMailSpace:
             "https://temp-mail117.p.rapidapi.com/getaddress.php", headers=self.__headers
         )
         return response.json()
+
+
+class RapidApi44:
+    __session = httpx.AsyncClient()
+    email: str | None = None
+    def __init__(self, api_key, email=None):
+        self.__api_key = api_key
+        self.email = email
+        self.__headers = headers = {
+            "x-rapidapi-key": api_key,
+            "x-rapidapi-host": "temp-mail44.p.rapidapi.com",
+            "Content-Type": "application/json"
+        }
+
+    async def create_instance(self):
+        resp = await self.create_email()
+        email = resp.json()['email']
+        self.email = email
+        return self
+
+    async def create_email(self):
+        url = 'https://temp-mail44.p.rapidapi.com/api/v3/email/new'
+        response = await self.__session.post(url, headers=self.__headers)
+        return response
+
+    async def get_messages(self, email=None) -> httpx.Response:
+        if email is not None:
+            self.email = email
+        url = f'https://temp-mail44.p.rapidapi.com/api/v3/email/{self.email}/messages'
+        response = await self.__session.get(url, headers=self.__headers)
+        return response
