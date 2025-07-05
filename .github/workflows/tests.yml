@@ -7,7 +7,7 @@ on:
       - main
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -19,6 +19,11 @@ jobs:
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
       - name: Sync dependencies
         run: uv sync --dev
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
       - name: Test
         run: uv run pytest -v
 #      - name: Run pytest
