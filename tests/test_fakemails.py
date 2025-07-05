@@ -4,10 +4,6 @@ import pytest
 
 import helpers
 
-from dotenv import load_dotenv
-
-
-load_dotenv()
 
 class TestRapidApi44:
     @pytest.mark.asyncio(loop_scope="session")
