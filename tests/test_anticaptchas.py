@@ -3,6 +3,9 @@ import os
 import pytest
 
 from helpers import anticaptchas
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 @pytest.mark.asyncio
