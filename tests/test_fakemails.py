@@ -47,6 +47,7 @@ class TestOneSecMail:
 
     @pytest.mark.asyncio(loop_scope="session")
     async def test_create_instance(self):
+        pytest.skip("OneSecMail is not working")
         cli = helpers.fake_mails.OneSecMail()
 
         cli = await cli.create_email_instance()
