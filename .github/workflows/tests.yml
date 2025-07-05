@@ -21,6 +21,11 @@ jobs:
         run: uv sync --dev
       - name: Test
         run: uv run pytest -v
+        env:
+          RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
+          REG_MAIL_API_KEY: ${{ secrets.REG_MAIL_API_KEY }}
+          TEMP_MAIL_API_KEY: ${{ secrets.TEMP_MAIL_API_KEY }}
+          ANTICAPTCHA_KEY: ${{ secrets.ANTICAPTCHA_KEY }}
 #      - name: Run pytest
 #        uses: pavelzw/pytest-action@v2
 #        with:
