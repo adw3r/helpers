@@ -17,3 +17,5 @@ dev = [
 # pyproject.toml
 [tool.pytest.ini_options]
 addopts = "-v"
+pythonpath = '.'
+asyncio_mode= 'auto'

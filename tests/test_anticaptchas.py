@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(loop_scope="session")
 async def test_anticaptcha():
     cap = anticaptchas.AntiCaptchaAPI(os.getenv("ANTICAPTCHA_KEY"))
     balance_response = await cap.get_balance()
