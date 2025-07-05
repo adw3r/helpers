@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 from helpers import anticaptchas
@@ -5,6 +7,7 @@ from helpers import anticaptchas
 
 @pytest.mark.asyncio
 async def test_anticaptcha():
-    cap = anticaptchas.AntiCaptchaAPI("")
+    cap = anticaptchas.AntiCaptchaAPI(os.getenv("ANTICAPTCHA_KEY"))
     balance_response = await cap.get_balance()
+    print(balance_response.text)
     assert balance_response.is_success
