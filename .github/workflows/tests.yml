@@ -19,10 +19,12 @@ jobs:
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
       - name: Sync dependencies
         run: uv sync --dev
-      - name: Run pytest
-        uses: pavelzw/pytest-action@v2
-        with:
-          verbose: true
+      - name: Test
+        run: uv run pytest -v
+#      - name: Run pytest
+#        uses: pavelzw/pytest-action@v2
+#        with:
+#          verbose: true
 #          emoji: true
 #          job-summary: true
 #          custom-arguments: '-v'
