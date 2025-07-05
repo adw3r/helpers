@@ -14,24 +14,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Install uv
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-      - name: Sync dependencies
-        run: uv sync --dev
-      - name: Test
+        uses: astral-sh/setup-uv@v5
+      - name: Install the project
+        run: uv sync --locked --all-extras --dev
+      - name: Run tests
         run: uv run pytest -v
         env:
           RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
           REG_MAIL_API_KEY: ${{ secrets.REG_MAIL_API_KEY }}
           TEMP_MAIL_API_KEY: ${{ secrets.TEMP_MAIL_API_KEY }}
           ANTICAPTCHA_KEY: ${{ secrets.ANTICAPTCHA_KEY }}
-#      - name: Run pytest
-#        uses: pavelzw/pytest-action@v2
-#        with:
-#          verbose: true
-#          emoji: true
-#          job-summary: true
-#          custom-arguments: '-v'
-#          click-to-expand: true
-#          report-title: 'Test Report'
