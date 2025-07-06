@@ -31,7 +31,7 @@ class TestRapidApi44:
 
     async def test_wait_for_html(self):
         cli = await self.cli.create_instance()
-        html = await cli.wait_for_html(attempts=1, timer=0)
+        html = await cli.wait_for_html(attempts=2, timer=0)
         assert html is None
 
 
@@ -45,7 +45,7 @@ class TestRegMailSpace:
 
     async def test_wait_for_html(self):
         cli = await self.cli.create_instance()
-        html = await cli.wait_for_html(attempts=1, timer=0)
+        html = await cli.wait_for_html(attempts=2, timer=0)
         assert html is None
 
 
@@ -59,7 +59,7 @@ class TestOneSecMail:
     async def test_wait_for_html(self):
         pytest.skip("OneSecMail is not working")
         cli = await self.cli.create_instance()
-        html = await cli.wait_for_html(attempts=1, timer=0)
+        html = await cli.wait_for_html(attempts=2, timer=0)
         assert html is None
 
 
@@ -75,5 +75,5 @@ class TestTempMailApi:
 
     async def test_wait_for_html(self):
         cli = await self.cli.create_instance()
-        html = await cli.wait_for_html(attempts=1, timer=0)
+        html = await cli.wait_for_html(attempts=2, timer=0)
         assert html is None

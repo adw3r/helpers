@@ -115,7 +115,24 @@ class TempMailApi(BasicInterface):
         )
 
     async def wait_for_html(self, attempts: int = 5, timer: int = 10) -> str | None:
-        return None
+        messages = []
+        while not messages and attempts > 0:
+            attempts -= 1
+            try:
+                get_messages_response = await self.get_messages()
+                messages = get_messages_response.json()
+                if 'error' in messages:
+                    messages = []
+            except Exception as error:
+                logging.error(error)
+            if not messages:
+                logging.info("sleeping for 1 secs")
+                await asyncio.sleep(timer)
+        if not messages:
+            return None
+        message = messages[0]
+        html = message["mail_html"]
+        return html
 
 
 class OneSecMail(BasicInterface):
