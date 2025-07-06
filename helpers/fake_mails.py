@@ -114,8 +114,8 @@ class TempMailApi(BasicInterface):
             f"/delete/id/{self.__get_md5_hash(self.email)}/"
         )
 
-    async def wait_for_html(self) -> str:
-        return ""
+    async def wait_for_html(self, attempts: int = 5, timer: int = 10) -> str | None:
+        return None
 
 
 class OneSecMail(BasicInterface):
@@ -200,16 +200,15 @@ class OneSecMail(BasicInterface):
         }
         return await self.__get_response(params)
 
-    async def wait_for_html(self) -> str:
-        return ""
+    async def wait_for_html(self, attempts: int = 5, timer: int = 10) -> str | None:
+        return None
 
 
 class RegMailSpace(BasicInterface):
 
 
-    async def wait_for_html(self):
+    async def wait_for_html(self, attempts: int = 5, timer: int = 10) -> str | None:
         messages = []
-        attempts = 5
         while not messages and attempts > 0:
             attempts -= 1
             try:
@@ -221,9 +220,10 @@ class RegMailSpace(BasicInterface):
             except Exception as error:
                 logging.error(error)
                 messages = None
-            await asyncio.sleep(10)
+            if not messages:
+                await asyncio.sleep(timer)
         if not messages:
-            raise Exception("temp email box is empty")
+            return None
         message = messages[-1]
         body_html = message["body_html"]
         return body_html
@@ -298,5 +298,21 @@ class RapidApi44(BasicInterface):
         response = await self.session.get(url, headers=self.__headers)
         return response
 
-    async def wait_for_html(self) -> str:
-        return ''
+    async def wait_for_html(self, attempts: int = 5, timer: int = 10) -> str | None:
+        email_messages = []
+        while not email_messages and attempts > 0:
+            attempts -= 1
+            try:
+                email_messages = await self.get_messages()
+                email_messages = email_messages.json()
+                assert "error" not in email_messages, "Error in fake_mail.get_messages"
+            except Exception as error:
+                logging.error(error)
+                email_messages = None
+            if not email_messages:
+                await asyncio.sleep(timer)
+        if not email_messages:
+            return None
+        email_message = email_messages[0]
+        body_html = email_message["body_text"]
+        return body_html
