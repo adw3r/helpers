@@ -59,8 +59,7 @@ class TestTempMailApi:
     @pytest.mark.asyncio(loop_scope="session")
     async def test_create_instance(self):
         cli = await self.cli.create_instance()
-        print(cli.email)
         assert cli.email is not None
         assert cli.apikey is not None
         messages = await cli.get_messages()
-        print(messages.text)
+        assert messages.text == '{"error":"There are no emails yet"}'
