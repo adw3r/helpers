@@ -26,7 +26,7 @@ class BasicInterface(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def wait_for_html(self) -> str:
+    async def wait_for_html(self, attempts: int = 5, timeout: int = 10) -> str:
         pass
 
 class TempMailApi(BasicInterface):
