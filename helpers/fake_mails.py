@@ -1,3 +1,5 @@
+import abc
+import asyncio
 import hashlib
 import logging
 import random
@@ -12,14 +14,29 @@ def generate_username(length: int = 8) -> str:
     return "".join(random.choices(string.ascii_lowercase + string.digits, k=length))
 
 
-class TempMailApi:
+class BasicInterface(abc.ABC):
+    session = httpx.AsyncClient(verify=False)
+    email: str = None
+    apikey: str = None
+    def __init__(self, apikey, email=None):
+        self.apikey = apikey
+        self.email = email
+    @abc.abstractmethod
+    async def create_instance(self):
+        pass
+
+    @abc.abstractmethod
+    async def wait_for_html(self) -> str:
+        pass
+
+class TempMailApi(BasicInterface):
+
     def __str__(self):
         return self.email
 
     def __repr__(self):
         return f"<TempMailApi {self.email=}>"
 
-    APIKEY = None  # works
     domains = [
         "@cevipsa.com",
         "@cpav3.com",
@@ -37,33 +54,28 @@ class TempMailApi:
     """
 
     __base_url = "https://privatix-temp-mail-v1.p.rapidapi.com/request"
-    __client = httpx.AsyncClient(verify=False)
-    email: str = None
-
-    def __get_headers(self):
-        return {"x-rapidapi-host": "privatix-temp-mail-v1.p.rapidapi.com", "x-rapidapi-key": self.APIKEY}
 
     def __init__(self, apikey: str, email: str = None):
-        self.APIKEY = apikey
-        self.email = email
+        super().__init__(apikey, email)
         if self.email is not None:
             self.__email_id = self.__get_md5_hash(email)
+        self.headers = {
+            "x-rapidapi-host": "privatix-temp-mail-v1.p.rapidapi.com",
+            "x-rapidapi-key": self.apikey,
+        }
 
-    def create_email_instance(self) -> "TempMailApi":
+    async def create_instance(self) -> "TempMailApi":
         """
         :return: TempMailApi object instance
         """
-        if self.email is None:
-            domain = random.choice(self.domains)
-            self.email = generate_username() + domain
-            self.__email_id = self.__get_md5_hash(self.email)
-            return self
-        raise errors.CantUseThisMethod("Can`t create an email instance with already existing email")
+        domain = random.choice(self.domains)
+        self.email = generate_username() + domain
+        self.__email_id = self.__get_md5_hash(self.email)
+        return self
 
     async def __create_request(self, path: str):
-        headers = self.__get_headers()
         url_path = self.__base_url + path
-        response = await self.__client.get(url_path, headers=headers)
+        response = await self.session.get(url_path, headers=self.headers)
         logging.info(f"{response = }")
         return response
 
@@ -98,15 +110,20 @@ class TempMailApi:
         return await self.__create_request(f"/source/id/{self.__email_id}/")
 
     async def get_delete_message(self) -> httpx.Response:  # testme
-        return await self.__create_request(f"/delete/id/{self.__get_md5_hash(self.email)}/")
+        return await self.__create_request(
+            f"/delete/id/{self.__get_md5_hash(self.email)}/"
+        )
+
+    async def wait_for_html(self) -> str:
+        return ""
 
 
-class OneSecMail:
+class OneSecMail(BasicInterface):
+
     """
     https://www.1secmail.com/api/
     """
 
-    email: str = None
     login: str | None = None
     domain: str | None = None
 
@@ -117,12 +134,13 @@ class OneSecMail:
         self.login = login
         self.domain = domain
         self.email = f"{login}@{domain}"
+        super().__init__('', self.email)
 
     def __repr__(self):
         return f"<OneSecMail {self.email = }>"
 
     @classmethod
-    async def create_email_instance(cls, username: str | None = None) -> "OneSecMail":
+    async def create_instance(cls, username: str | None = None) -> "OneSecMail":
         if not username:
             username = generate_username(10).lower()
         resp = await cls.gen_random_mailboxes(1)
@@ -135,13 +153,13 @@ class OneSecMail:
 
     @classmethod
     async def gen_random_mailboxes(cls, count: int) -> httpx.Response:
-        "https://www.1secmail.com/api/v1/?action=genRandomMailbox&count=10"
+        """https://www.1secmail.com/api/v1/?action=genRandomMailbox&count=10"""
         params = {"action": "genRandomMailbox", "count": count}
         return await cls.__get_response(params)
 
     @classmethod
     async def domains_list(cls) -> httpx.Response:
-        "https://www.1secmail.com/api/v1/?action=getDomainList"
+        """https://www.1secmail.com/api/v1/?action=getDomainList"""
         params = {"action": "getDomainList"}
         return await cls.__get_response(params)
 
@@ -152,40 +170,73 @@ class OneSecMail:
             raise errors.EmptyDomainError("Domain can`t be empty!")
 
     async def get_messages(self) -> httpx.Response:
-        "https://www.1secmail.com/api/v1/?action=getMessages&login=demo&domain=1secmail.com"
+        """https://www.1secmail.com/api/v1/?action=getMessages&login=demo&domain=1secmail.com"""
         self.__check_login_domain()
         params = {"action": "getMessages", "login": self.login, "domain": self.domain}
         return await self.__get_response(params)
 
     async def read_message(self, message_id: str | int) -> httpx.Response:
-        "https://www.1secmail.com/api/v1/?action=readMessage&login=demo&domain=1secmail.com&id=639"
+        """https://www.1secmail.com/api/v1/?action=readMessage&login=demo&domain=1secmail.com&id=639"""
         self.__check_login_domain()
         if not message_id:
             raise errors.MessageEmptyError("message id can`t be empty")
-        params = {"action": "readMessage", "login": self.login, "domain": self.domain, "id": message_id}
+        params = {
+            "action": "readMessage",
+            "login": self.login,
+            "domain": self.domain,
+            "id": message_id,
+        }
         return await self.__get_response(params)
 
     async def download(self, file_name: str) -> httpx.Response:
-        "https://www.1secmail.com/api/v1/?action=download&login=demo&domain=1secmail.com&id=639&file=iometer.pdf"
+        """https://www.1secmail.com/api/v1/?action=download&login=demo&domain=1secmail.com&id=639&file=iometer.pdf"""
         if not file_name:
             raise errors.FileNameEmptyError("file_name id can`t be empty")
-        params = {"action": "download", "login": self.login, "domain": self.domain, "file": file_name}
+        params = {
+            "action": "download",
+            "login": self.login,
+            "domain": self.domain,
+            "file": file_name,
+        }
         return await self.__get_response(params)
 
+    async def wait_for_html(self) -> str:
+        return ""
 
-class RegMailSpace:
-    __client = httpx.AsyncClient()
+
+class RegMailSpace(BasicInterface):
+
+
+    async def wait_for_html(self):
+        messages = []
+        attempts = 5
+        while not messages and attempts > 0:
+            attempts -= 1
+            try:
+                messages = await self.get_messages()
+                assert "error" not in messages.text, (
+                    '"error" in mail_interface.get_messages()'
+                )
+                messages = messages.json()["messages"]
+            except Exception as error:
+                logging.error(error)
+                messages = None
+            await asyncio.sleep(10)
+        if not messages:
+            raise Exception("temp email box is empty")
+        message = messages[-1]
+        body_html = message["body_html"]
+        return body_html
 
     def __init__(self, api_key, email=None):
-        self.__api_key = api_key
-        self.email = email
+        super().__init__(api_key, email)
         self.__headers = {
             "x-rapidapi-host": "temp-mail117.p.rapidapi.com",
-            "x-rapidapi-key": self.__api_key,
+            "x-rapidapi-key": self.apikey,
         }
 
     def __repr__(self):
-        return f"RegMailSpace(api_key={self.__api_key}, email={self.email})"
+        return f"RegMailSpace(api_key={self.apikey}, email={self.email})"
 
     async def create_instance(self):
         email = await self.get_email()
@@ -204,7 +255,7 @@ class RegMailSpace:
         params = {
             "email": self.email,
         }
-        response = await self.__client.get(
+        response = await self.session.get(
             "https://temp-mail117.p.rapidapi.com/getmail.php",
             headers=self.__headers,
             params=params,
@@ -212,38 +263,40 @@ class RegMailSpace:
         return response
 
     async def get_email(self) -> dict:
-        response = await self.__client.get(
+        response = await self.session.get(
             "https://temp-mail117.p.rapidapi.com/getaddress.php", headers=self.__headers
         )
         return response.json()
 
 
-class RapidApi44:
-    __session = httpx.AsyncClient()
+class RapidApi44(BasicInterface):
     email: str | None = None
+
     def __init__(self, api_key, email=None):
-        self.__api_key = api_key
-        self.email = email
-        self.__headers = headers = {
+        super().__init__(api_key, email)
+        self.__headers = {
             "x-rapidapi-key": api_key,
             "x-rapidapi-host": "temp-mail44.p.rapidapi.com",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
 
-    async def create_instance(self) -> 'RapidApi44':
+    async def create_instance(self) -> "RapidApi44":
         resp = await self.create_email()
-        email = resp.json()['email']
+        email = resp.json()["email"]
         self.email = email
         return self
 
     async def create_email(self):
-        url = 'https://temp-mail44.p.rapidapi.com/api/v3/email/new'
-        response = await self.__session.post(url, headers=self.__headers)
+        url = "https://temp-mail44.p.rapidapi.com/api/v3/email/new"
+        response = await self.session.post(url, headers=self.__headers)
         return response
 
     async def get_messages(self, email=None) -> httpx.Response:
         if email is not None:
             self.email = email
         url = f'https://temp-mail44.p.rapidapi.com/api/v3/email/{self.email}/messages'
-        response = await self.__session.get(url, headers=self.__headers)
+        response = await self.session.get(url, headers=self.__headers)
         return response
+
+    async def wait_for_html(self) -> str:
+        return ''
