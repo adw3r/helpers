@@ -331,5 +331,5 @@ class RapidApi44(BasicInterface):
         if not email_messages:
             return None
         email_message = email_messages[0]
-        body_html = email_message["body_text"]
+        body_html = email_message["body_html"]
         return body_html
