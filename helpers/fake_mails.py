@@ -1,5 +1,6 @@
 import abc
 import asyncio
+import base64
 import hashlib
 import logging
 import random
@@ -242,7 +243,8 @@ class RegMailSpace(BasicInterface):
         if not messages:
             return None
         message = messages[-1]
-        body_html = message["body_html"]
+        body_html = message['body']["html"]
+        body_html = base64.b64decode(body_html + "=").decode("utf-8")
         return body_html
 
     def __init__(self, api_key, email=None):
