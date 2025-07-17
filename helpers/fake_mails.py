@@ -243,6 +243,8 @@ class RegMailSpace(BasicInterface):
             return None
         message = messages[-1]
         body_html = message["body_html"]
+        if 'DOCTYPE' in body_html:
+            return body_html
         return body_html
 
     def __init__(self, api_key, email=None):
