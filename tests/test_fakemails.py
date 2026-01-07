@@ -88,7 +88,7 @@ class TestNiceMailApi:
 
     async def test_create_instance(self):
         nicemail = helpers.fake_mails.NiceMailApi()
-        nicemail = nicemail.create_instance()
+        nicemail = await nicemail.create_instance()
         email = nicemail.email
         assert email, 'email is empty'
 
