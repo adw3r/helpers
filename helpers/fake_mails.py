@@ -1,10 +1,14 @@
-import abc
+import datetime
+import typing
 import asyncio
 import base64
 import hashlib
 import logging
 import random
+import re
 import string
+from abc import ABC, abstractmethod
+from typing import Self
 
 import httpx
 
@@ -15,23 +19,34 @@ def generate_username(length: int = 8) -> str:
     return "".join(random.choices(string.ascii_lowercase + string.digits, k=length))
 
 
-class BasicInterface(abc.ABC):
-    session = httpx.AsyncClient(verify=False)
-    email: str = None
-    apikey: str = None
+class InterFaceWithApiKey:
+    apikey: str
+    email: str | None = None
+
     def __init__(self, apikey, email=None):
         self.apikey = apikey
         self.email = email
-    @abc.abstractmethod
+
+
+class InterfaceMethods(ABC):
+    @abstractmethod
     async def create_instance(self):
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     async def wait_for_html(self, attempts: int = 5, timeout: int = 10) -> str:
         pass
 
-class TempMailApi(BasicInterface):
 
+class InterfaceSession:
+    session: httpx.AsyncClient = httpx.AsyncClient(verify=False)
+
+
+class BasicInterface(InterFaceWithApiKey, InterfaceMethods, InterfaceSession, ABC):
+    pass
+
+
+class TempMailApi(BasicInterface):
     def __str__(self):
         return self.email
 
@@ -122,7 +137,7 @@ class TempMailApi(BasicInterface):
             try:
                 get_messages_response = await self.get_messages()
                 messages = get_messages_response.json()
-                if 'error' in messages:
+                if "error" in messages:
                     messages = []
             except Exception as error:
                 logging.error(error)
@@ -137,7 +152,6 @@ class TempMailApi(BasicInterface):
 
 
 class OneSecMail(BasicInterface):
-
     """
     https://www.1secmail.com/api/
     """
@@ -152,7 +166,7 @@ class OneSecMail(BasicInterface):
         self.login = login
         self.domain = domain
         self.email = f"{login}@{domain}"
-        super().__init__('', self.email)
+        super().__init__("", self.email)
 
     def __repr__(self):
         return f"<OneSecMail {self.email = }>"
@@ -223,8 +237,6 @@ class OneSecMail(BasicInterface):
 
 
 class RegMailSpace(BasicInterface):
-
-
     async def wait_for_html(self, attempts: int = 5, timer: int = 10) -> str | None:
         messages = []
         while not messages and attempts > 0:
@@ -243,8 +255,8 @@ class RegMailSpace(BasicInterface):
         if not messages:
             return None
         message = messages[-1]
-        body_html = message['body']["html"]
-        if 'DOCTYPE' in body_html:
+        body_html = message["body"]["html"]
+        if "DOCTYPE" in body_html:
             return body_html
         body_html = base64.b64decode(body_html + "=").decode("utf-8")
         return body_html
@@ -301,7 +313,7 @@ class RapidApi44(BasicInterface):
             "Content-Type": "application/json",
         }
 
-    async def create_instance(self) -> "RapidApi44":
+    async def create_instance(self) -> Self:
         resp = await self.create_email()
         email = resp.json()["email"]
         self.email = email
@@ -315,7 +327,7 @@ class RapidApi44(BasicInterface):
     async def get_messages(self, email=None) -> httpx.Response:
         if email is not None:
             self.email = email
-        url = f'https://temp-mail44.p.rapidapi.com/api/v3/email/{self.email}/messages'
+        url = f"https://temp-mail44.p.rapidapi.com/api/v3/email/{self.email}/messages"
         response = await self.session.get(url, headers=self.__headers)
         return response
 
@@ -337,3 +349,84 @@ class RapidApi44(BasicInterface):
         email_message = email_messages[0]
         body_html = email_message["body_html"]
         return body_html
+
+
+class NiceMailApi(InterfaceMethods, InterfaceSession):
+    domains = [
+        "oeralb.com",
+        "sisood.com",
+        "disefl.com",
+        "suarj.com",
+        "mfxis.com",
+        "anogz.com",
+    ]
+    token: str
+    token_pattern = re.compile('(?<=")eyJhbGciOiJIUzI1NiJ9\..+(?="]</script>)')
+
+    def __serialize_bearer_token(self, resp: httpx.Response) -> str:
+        return self.token_pattern.search(resp.text).group(0)
+
+    async def get_bearer_token(self) -> httpx.Response:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML"
+            ", like Gecko) Chrome/138.0.0.0 Safari/537.36",
+        }
+
+        resp = await self.session.get("https://nicemail.cc/en", headers=headers)
+
+        return resp
+
+    async def get_emails(self) -> httpx.Response:
+        headers = {
+            "Authorization": f"Bearer {self.token}",
+        }
+        headers['x-request-id'] = ''.join([random.choice(string.digits + string.ascii_lowercase) for _ in range(32)])
+        headers['x-timestamp'] = str(round(datetime.datetime.now().timestamp()))
+        resp = await self.session.get(f"https://web.nicemail.cc/api/v1/mailbox/{self.email}", headers=headers)
+        return resp
+
+    async def get_message(self, message_id: str) -> httpx.Response:
+        """
+        https://web.nicemail.cc/api/v1/mailbox/bvb2kakh%40sisood.com/20260106T235659-2047
+        """
+        headers = {
+            "Authorization": f"Bearer {self.token}",
+        }
+        headers['x-request-id'] = ''.join([random.choice(string.digits + string.ascii_lowercase) for _ in range(32)])
+        headers['x-timestamp'] = str(round(datetime.datetime.now().timestamp()))
+        resp = await self.session.get(f"https://web.nicemail.cc/api/v1/mailbox/{self.email}/{message_id}", headers=headers)
+        return resp
+
+
+    async def wait_for_html(self, attempts: int = 5, timer: float = 10) -> str | None:
+        """
+        https://web.nicemail.cc/api/v1/mailbox/rouwod33pg%40disefl.com
+        """
+        if not self.email:
+            raise Exception("email cannot be None")
+        email_messages = []
+        while not email_messages and attempts > 0:
+            attempts -= 1
+            resp = await self.get_emails()
+            email_messages = resp.json()
+            if "error" in email_messages:
+                email_messages = []
+            if not email_messages:
+                await asyncio.sleep(timer)
+        if not email_messages:
+            return None
+        last_letter = await self.get_message(message_id=email_messages[0]['id'])
+        last_letter = last_letter.json()
+        html = last_letter['body']['html']
+        return html
+
+
+    async def create_instance(self) -> Self:
+        if not self.email:
+            domain = random.choice(self.domains)
+            self.email = f'{generate_username()}@{domain}'
+        self.token = self.__serialize_bearer_token(await self.get_bearer_token())
+        return self
+
+    def __init__(self, email=None):
+        self.email = email

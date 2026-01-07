@@ -77,3 +77,19 @@ class TestTempMailApi:
         cli = await self.cli.create_instance()
         html = await cli.wait_for_html(attempts=2, timer=0)
         assert html is None
+
+
+class TestNiceMailApi:
+    async def test_wait_for_html(self):
+        cli = await helpers.fake_mails.NiceMailApi().create_instance()
+        html = await cli.wait_for_html(attempts=10, timer=.3)
+        assert html is None
+
+
+    async def test_create_instance(self):
+        nicemail = helpers.fake_mails.NiceMailApi()
+        nicemail = nicemail.create_instance()
+        email = nicemail.email
+        assert email, 'email is empty'
+
+        username, domain = email.split('@')
