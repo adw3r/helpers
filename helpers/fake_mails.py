@@ -29,6 +29,10 @@ class InterFaceWithApiKey:
 
 
 class InterfaceMethods(ABC):
+    email: str | None = None
+    def __str__(self):
+        return self.email
+
     @abstractmethod
     async def create_instance(self):
         pass
@@ -47,8 +51,6 @@ class BasicInterface(InterFaceWithApiKey, InterfaceMethods, InterfaceSession, AB
 
 
 class TempMailApi(BasicInterface):
-    def __str__(self):
-        return self.email
 
     def __repr__(self):
         return f"<TempMailApi {self.email=}>"

@@ -92,4 +92,4 @@ class TestNiceMailApi:
         email = nicemail.email
         assert email, 'email is empty'
 
-        username, domain = email.split('@')
+        print(nicemail)
