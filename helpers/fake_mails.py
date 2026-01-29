@@ -374,7 +374,7 @@ class NiceMailApi(InterfaceMethods, InterfaceSession):
             ", like Gecko) Chrome/138.0.0.0 Safari/537.36",
         }
 
-        resp = await self.session.get("https://nicemail.cc/en", headers=headers)
+        resp = await self.session.get("https://mailporary.com/en", headers=headers)
 
         return resp
 
@@ -384,25 +384,25 @@ class NiceMailApi(InterfaceMethods, InterfaceSession):
         }
         headers['x-request-id'] = ''.join([random.choice(string.digits + string.ascii_lowercase) for _ in range(32)])
         headers['x-timestamp'] = str(round(datetime.datetime.now().timestamp()))
-        resp = await self.session.get(f"https://web.nicemail.cc/api/v1/mailbox/{self.email}", headers=headers)
+        resp = await self.session.get(f"https://web.mailporary.com/api/v1/mailbox/{self.email}", headers=headers)
         return resp
 
     async def get_message(self, message_id: str) -> httpx.Response:
         """
-        https://web.nicemail.cc/api/v1/mailbox/bvb2kakh%40sisood.com/20260106T235659-2047
+        https://web.mailporary.com/api/v1/mailbox/bvb2kakh%40sisood.com/20260106T235659-2047
         """
         headers = {
             "Authorization": f"Bearer {self.token}",
         }
         headers['x-request-id'] = ''.join([random.choice(string.digits + string.ascii_lowercase) for _ in range(32)])
         headers['x-timestamp'] = str(round(datetime.datetime.now().timestamp()))
-        resp = await self.session.get(f"https://web.nicemail.cc/api/v1/mailbox/{self.email}/{message_id}", headers=headers)
+        resp = await self.session.get(f"https://web.mailporary.com/api/v1/mailbox/{self.email}/{message_id}", headers=headers)
         return resp
 
 
     async def wait_for_html(self, attempts: int = 5, timer: float = 10) -> str | None:
         """
-        https://web.nicemail.cc/api/v1/mailbox/rouwod33pg%40disefl.com
+        https://web.mailporary.com/api/v1/mailbox/rouwod33pg%40disefl.com
         """
         if not self.email:
             raise Exception("email cannot be None")
