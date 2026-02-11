@@ -43,7 +43,7 @@ class InterfaceMethods(ABC):
 
 
 class InterfaceSession:
-    session: httpx.AsyncClient = httpx.AsyncClient(verify=False)
+    session: httpx.AsyncClient = httpx.AsyncClient(verify=False, follow_redirects=True)
 
 
 class BasicInterface(InterFaceWithApiKey, InterfaceMethods, InterfaceSession, ABC):
