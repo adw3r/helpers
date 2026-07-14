@@ -355,12 +355,12 @@ class RapidApi44(BasicInterface):
 
 class NiceMailApi(InterfaceMethods, InterfaceSession):
     domains = [
-        "oeralb.com",
-        "sisood.com",
-        "disefl.com",
-        "suarj.com",
-        "mfxis.com",
-        "anogz.com",
+        "suarj.com",  #
+        "mfxis.com",  #                 "vbgvd.com",
+        "anogz.com",  #                 "wzjpj.com",
+        'jgkcr.com',
+        'vbgvd.com',
+        'wzjpj.com'
     ]
     token: str
     token_pattern = re.compile('(?<=")eyJhbGciOiJIUzI1NiJ9\..+(?="]</script>)')
