@@ -4,10 +4,10 @@ import httpx
 class SmsHub:
     api_key = ""  # 0.1911
     __url = "https://smshub.org/stubs/handler_api.php"
-    __session = httpx.AsyncClient()
 
     def __init__(self, apikey: str = ""):
         self.api_key = apikey
+        self.__session = httpx.AsyncClient()
 
     async def __get_response(self, params):
         api_key_params = {

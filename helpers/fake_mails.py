@@ -43,7 +43,19 @@ class InterfaceMethods(ABC):
 
 
 class InterfaceSession:
-    session: httpx.AsyncClient = httpx.AsyncClient(verify=False, follow_redirects=True)
+    # a client per instance, made on first use: an httpx.AsyncClient is bound to the event loop
+    # it first ran in, so one shared by the class breaks once that loop is closed
+    _session: httpx.AsyncClient | None = None
+
+    @property
+    def session(self) -> httpx.AsyncClient:
+        if self._session is None:
+            self._session = httpx.AsyncClient(verify=False, follow_redirects=True)
+        return self._session
+
+    @session.setter
+    def session(self, value: httpx.AsyncClient):
+        self._session = value
 
 
 class BasicInterface(InterFaceWithApiKey, InterfaceMethods, InterfaceSession, ABC):
@@ -161,7 +173,6 @@ class OneSecMail(BasicInterface):
     login: str | None = None
     domain: str | None = None
 
-    __client = httpx.AsyncClient(timeout=120, verify=False)
     __api_url = "https://www.1secmail.com/api/v1/"
 
     def __init__(self, login: str | None = None, domain: str | None = None):
@@ -183,7 +194,8 @@ class OneSecMail(BasicInterface):
 
     @classmethod
     async def __get_response(cls, params: dict) -> httpx.Response:
-        return await cls.__client.get(f"{cls.__api_url}", params=params)
+        async with httpx.AsyncClient(timeout=120, verify=False) as client:
+            return await client.get(f"{cls.__api_url}", params=params)
 
     @classmethod
     async def gen_random_mailboxes(cls, count: int) -> httpx.Response:

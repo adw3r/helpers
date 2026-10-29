@@ -18,7 +18,6 @@ class AntiCaptchaAPI:
         "Content-Type": "application/json",
     }
     __user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36"
-    _client = httpx.AsyncClient(timeout=httpx.Timeout(10))
 
     def __init__(self, api_key: str):
         self.API_KEY = api_key
@@ -142,7 +141,6 @@ class TwoCaptchaApi:
         "Content-Type": "application/json",
     }
     __user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36"
-    _client = httpx.AsyncClient(timeout=httpx.Timeout(10))
 
     def __init__(self, api_key: str):
         self.API_KEY = api_key
